@@ -1,0 +1,1 @@
+# luckfox-pico-mini-b
