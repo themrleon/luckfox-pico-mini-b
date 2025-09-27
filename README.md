@@ -22,13 +22,13 @@ The 128 MB flash may be enough once you get your OS image optimized to only cont
 | **GPIO**           | 17 × GPIO pins                                 |
 | **Default Storage**| SPI NAND FLASH (128MB) |
 
-Notice although it has a RISC-V **MCU**, info about it is rarely found, the main SoC and where everything will happens is in the ARM v7.  
+Notice although it has a RISC-V **MCU**, info about it is rarely found, the main SoC and where everything happens is in the ARM v7.  
 <img width="1017" height="837" alt="image" src="https://github.com/user-attachments/assets/bf2b6627-f2e0-46bf-b742-df9c8c6ccf66" />
 <img width="1107" height="461" alt="image" src="https://github.com/user-attachments/assets/218060b0-ab7a-442f-b486-03a574b00f4f" />
 <img width="3000" height="2205" alt="image" src="https://github.com/user-attachments/assets/3561d0bb-bf7c-49d9-a5ca-5fe01d22fab3" />
 
-# RV1103 vs RV1106 Comparison
-The SoC is a **Rockchip RV1103**, but you'll notice that many files are using configurations from the **RV1106** as well, so don't disregard RV1106-specific content, because most things are compatible between them.
+# Rockchip RV1103 vs RV1106
+Despite this verions having a **RV1103** SoC, you'll notice many files using configurations from the **RV1106** as well, so don't disregard RV1106-specific content, because most things are compatible between them.
 
 | Parameter | RV1103 | RV1106 |
 |:---|:---:|:---:|
@@ -77,27 +77,27 @@ writing to /dev/sdb
    mmcblk1: rootfs.img size:6,442,450,944/6G (offset:0/0B) imgsize:1,136,914,432 (1,110,268K)
 done.
 ```
-Where `/dev/sdb` is your SD Card device. The process may take a while, be patient (it's not stuck), once it's done, remove the SD card, plug into the pico and follow [this](#how-to-access-pico-via-usb-cable)
+Where `/dev/sdb` is your SD Card device. The process may take a while, be patient (it's not stuck), once it's done, remove the SD card, plug into the pico and follow [this](#how-to-access-pico-via-usb-cable).
 
 # What is RNDIS ?
 This is what enables the connection to the pico via USB cable:
 > Remote Network Driver Interface Specification (RNDIS) is a Microsoft proprietary protocol used primarily on top of USB to provide a virtual Ethernet link between a host computer and a remote device
 
 # How to boot from the Flash vs SD Card ?
-If there is no SD card inserted, it will boot from the external SPI Flash chip, otherwise will boot from the SD card
+If there is no SD card inserted, it will boot from the external SPI Flash chip, otherwise will boot from the SD card.
 
 # Pico USB modes
 Pico can be in two USB modes:
-* Device/Peripheral: Functions as a USB network interface (RNDIS), appearing as a connected device to a host computer
-* Host: Acts as a USB host, allowing you to connect other peripherals and devices to it
+* Device/Peripheral: Work as a RNDIS network interface to the host computer
+* Host: Acts as a USB host, allowing to connect other peripherals and devices to it
 > [!TIP]
-> If you connect things to the pico USB port and nothing shows up on `dmesg` nor `lsusb` that means it's in device mode
+> If connecting things to pico USB port changes nothing on `dmesg` nor `lsusb`, that means it's in device mode
 
 # How to switch USB modes ?
-There are two ways: **SDK** and **config tool** (this is a tool already inside the OS image)
+There are two ways: **SDK** and **config tool** (already inside the OS images).
 
 ### SDK
-From the SDK root folder edit `sysdrv/source/kernel/arch/arm/boot/dts/rv1103g-luckfox-pico-mini.dts` and change `dr_mode` to host:
+From the SDK root folder edit `sysdrv/source/kernel/arch/arm/boot/dts/rv1103g-luckfox-pico-mini.dts` and change `dr_mode` to `host`:
 ```bash
 /**********USB**********/
 &usbdrd_dwc3 {
@@ -105,16 +105,16 @@ From the SDK root folder edit `sysdrv/source/kernel/arch/arm/boot/dts/rv1103g-lu
         dr_mode = "host";
 };
 ```
-After that, all images built will have the chosen mode as default.
+After that, all images built will have the chosen mode by default.
 
 ### Config tool
 Run `sudo luckfox-config` inside the OS:  
 <img width="351" height="249" alt="image" src="https://github.com/user-attachments/assets/b886a545-9c29-44e1-bac3-04a9c8de8a29" />  
 
-Note that it will only take effect after a reboot and also persist.
+Note that it will only take effect after a reboot (and persist too).
 
 # How to access Pico via USB cable
-Connect pico to computer via USB cable, after a while a new RNDIS / network interface should be detected:
+Connect pico to computer via USB cable, after a while a new RNDIS network interface should be detected:
 ```bash
 $ ifconfig 
 enxae935ce313b2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
@@ -128,10 +128,11 @@ enxae935ce313b2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
 > [!TIP]
 > Run `watch ifconfig` and wait until the new interface show up
 
-Set the new interface ip to **172.32.0.100/16** (same subnet as the pico, which ip is always `172.32.0.70`) and enable **internet sharing** if you want access to internet from the pico OS. On Lubuntu, the options are located here:  
+Set the new interface ip to **172.32.0.100/16** (same subnet as the pico, in the Ubuntu OS is `172.32.0.70`, but sometimes it's final `.93`, make sure to know based on your OS) and enable **internet sharing** if you want access to internet from the pico OS. On Lubuntu, the options are located here:  
+
 <img width="569" height="545" alt="image" src="https://github.com/user-attachments/assets/52d58af2-b89f-4b4c-a920-e6c78e5009af" />  
 
-After applying the new setting, `ifconfig` should show the ip `172.32.0.100` was assigned to the interface:
+After applying the new setting, check `ifconfig` for the ip `172.32.0.100` assigned to the interface:
 ```bash
 enxae935ce313b2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         inet 172.31.0.100  netmask 255.255.0.0  broadcast 172.31.255.255
@@ -230,7 +231,8 @@ I am using the latest SDK version from master branch as of now, which is this:
 commit 994243753789e1b40ef91122e8b3688aae8f01b8 (HEAD -> main, origin/main, origin/HEAD)
 Date:   Thu Aug 14 14:38:50 2025 +0800
 ```
-The only OS option available is `buildroot` with `Linux kernel 5.10.160`, but you may try to go back to an older SDK version/commit and see if the `ubuntu` option still there. Otherwise stick with pre-existing images.
+The only OS option available is `buildroot` with `Linux kernel 5.10.160`, but you may try to go back to an older SDK version/commit and see if the `ubuntu` option still there. Otherwise stick with pre-existing images:  
+https://drive.google.com/drive/folders/14kFWY93MZ4Zga4ke2PVQgUs1y9xcMG0S
 
 ## Buildroot
 Buildroot remains as the only official supported OS from Luckfox via their SDK:  
@@ -267,7 +269,7 @@ From there you just need to copy them to the SD card with the [`blkenvflash`](#b
 > You'll need to run this process every time you make changes within the SDK files. The first build is slow because it compiles everything from scratch. After that, builds are faster as they only compile the parts you've changed.
 
 # Firmware files
-There is a bunch of `.img` files when building with the SDK or downloading iamges from somewhere, here is their meaning (the size is just for example purposes):
+There is a bunch of `.img` files when building with the SDK or downloading images from somewhere, here is their meaning (the size is just for example purposes):
 
 | File | Size | Description | Contents / Examples | Boot Order |
 |------|------|-------------|---------------------|------------|
@@ -344,6 +346,7 @@ From the SDK root folder `sudo ./build.sh kernelconfig`, once you are done run `
 
 # Why there isn't 64MB RAM available ?
 The SDK generate images allocating 24MB of RAM to the CMA, you can claim it back by setting to 1MB as per Luckfox recommendation, but first check your OS RAM situation:  
+
 CMA using 24MB of RAM, only 34MB RAM left:
 ```bash
 $ cat /proc/meminfo 
@@ -407,6 +410,70 @@ Laptop:
 | Raspberry Pi | 548.533 s | 1.9 MB/s |
 | Laptop | 2.89258 s | 354 MB/s |
 
+# Flash vs SD Card vs RAM benchmark
+But at least the onboard 128MB Flash chip is fast, right?! Get the `hdparm` tool from buildroot menu and:
+```
+$ cat /proc/partitions 
+major minor  #blocks  name
+   1        0       4096 ram0
+   1        1       4096 ram1
+   1        2       4096 ram2
+   1        3       4096 ram3
+   1        4       4096 ram4
+   1        5       4096 ram5
+   1        6       4096 ram6
+   1        7       4096 ram7
+   1        8       4096 ram8
+   1        9       4096 ram9
+   1       10       4096 ram10
+   1       11       4096 ram11
+   1       12       4096 ram12
+   1       13       4096 ram13
+   1       14       4096 ram14
+   1       15       4096 ram15
+  31        0     131072 mtdblock0
+ 179        0   61069312 mmcblk1
+ 179        1         32 mmcblk1p1
+ 179        2        512 mmcblk1p2
+ 179        3        256 mmcblk1p3
+ 179        4      32768 mmcblk1p4
+ 179        5     524288 mmcblk1p5
+ 179        6     262144 mmcblk1p6
+ 179        7    8388608 mmcblk1p7
+```
+
+Onboard 128MB SPI Flash
+```bash
+$ hdparm -t /dev/mtdblock0
+/dev/mtdblock0:
+ Timing buffered disk reads:  14 MB in  3.18 seconds =   4.40 MB/sec
+```
+
+64GB Generic SD Card
+```bash
+$ hdparm -t /dev/mmcblk1p7
+/dev/mmcblk1p7:
+ Timing buffered disk reads:  66 MB in  3.02 seconds =  21.87 MB/sec
+```
+
+DDR2 RAM:
+```bash
+$ hdparm -t /dev/ram15
+/dev/ram15:
+ Timing buffered disk reads:   4 MB in  0.02 seconds = 180.71 MB/sec
+```
+| Device | Path | Type | Speed (MB/sec) |
+| :--- | :--- | :--- | :--- |
+| **DDR2 RAM** | `/dev/ram15` | RAM Disk | **180.71**  |
+| **SD Card** | `/dev/mmcblk1p7` | microSD Card | **21.87** |
+| **SPI Flash** | `/dev/mtdblock0` | SPI NAND Flash | **4.40**  |
+
+- **DDR2 RAM is fastest**: As expected, reading from a RAM disk is significantly faster than from flash storage. **180.71 MB/s** is consistent with the capabilities of DDR2 memory used in these boards.
+- **SD Card vs. SPI Flash**: The SD card is about **5 times faster** than the onboard SPI NAND Flash, this is typical, as SD cards often have a faster interface (SDIO) compared to SPI.
+
+> [!IMPORTANT]
+> This was all tested running OS from SD Card, running from Flash, it gets even slower ~3.68 MB/sec, so stick with the SD card and if you need fast access use one of the RAM banks
+
 # UART connection
 To avoid the annoying process of connecting pico as an USB device / RNDIS interface every time, and also to free the USB port, you can just keep a serial/UART (`ttyFIQ0`) connection all the time instead, this is a more raw/low level debugger connection, from where you will be able to see everything pico is doing, also will be the only way to access the bootloader. Any USB/serial converter should work, as long as it works in **3.3v and NOT 5v**, otherwise you will damage the SoC:
 <img width="960" height="680" alt="image" src="https://github.com/user-attachments/assets/af13c196-2472-4bfb-81f9-8cd056a55e56" />
@@ -424,7 +491,7 @@ I am using a ch341 based chip, created at `ttyUSB0`:
 And connect using minicom `minicom -D /dev/ttyUSB0` (Keep all default settings, 115200 8N1).
 
 # But can it run DOOM ?
-Just because it hasn't video, sound and input, that doesn't mean we cannot run DOOM! here is a test running `fbDOOM` with a virtual framebuffer (`/dev/fb0`) accessed remotely with `x11vnc` via RNDIS interface:  
+Just because it hasn't video, sound and input, that doesn't mean we cannot run DOOM! here is a test running `fbDOOM` with a virtual framebuffer (`/dev/fb0`) accessed remotely with `x11vnc` via USB RNDIS interface cable:  
 [![Watch the video](https://img.youtube.com/vi/6dsxjtB3URw/0.jpg)](https://www.youtube.com/watch?v=6dsxjtB3URw)
 
 CPU usage varies between 65-70%:  
@@ -460,7 +527,7 @@ In this example the `custom-overlay` folder is in the SDK root path, now to add 
 ```bash
 $ cd custom-overlay
 $ mkdir -p usr/bin
-$ cp <binary> <sdk root folder>/custom-overlay/usr/bin
+$ cp <binary from somewhere> usr/bin
 ```
 > [!IMPORTANT]
 > This will be very useful to overwrite system files and add pre-baked data like network credentials, users, passwords, custom binaries and drivers
@@ -506,7 +573,7 @@ Frame buffer device information:
     LineLength  : 640
     Accelerator : No
 ```
-To use as a built-in module, check the example [here](#u-boot-and-kernel-parameters)
+You can see these steps in the DOOM demo [video](#but-can-it-run-doom-). To use as a built-in module, check the example [here](#u-boot-and-kernel-parameters).
 
 # U-Boot and kernel parameters
 The U-boot bootloader is the one passing the parameters to the Linux kernel, they can be changed at runtime or compile-time. At runtime is easier/quicker to test things, but they won't persist.  
@@ -581,10 +648,14 @@ That is it! from now on it will persist on new images.
 # Wifi, Bluetooth and Audio
 <img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/92b338e0-7988-4fd6-bf4d-5ef862e4b559" />
 
-You can have all that and much more using USB dongles, however it all comes down to driver support, you'll have to find the right driver for your device and OS. Below are examples of how I got wifi and audio working.
+You can have all that and much more using USB devices, however it all comes down to driver support, you'll have to find the right driver for your device and OS. Below are examples of how I got audio, wifi and camera working.
+> [!IMPORTANT]
+> Make sure to use a powered USB hub
 
 ## Audio USB dongle
 <img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/1707d395-797f-4906-82de-453fff97c4ba" />
+
+> ALSA (Advanced Linux Sound Architecture) serves as the fundamental audio framework in Linux, providing the essential kernel drivers, libraries, and utilities that enable communication between software applications and sound hardware. It manages the low-level interaction with audio devices, allowing for playback, recording, and volume control directly at the driver level. While modern desktop environments typically use higher-level sound servers like PulseAudio on top of ALSA to handle advanced features such as audio mixing from multiple applications and network streaming, ALSA itself remains the core layer that directly interfaces with the physical sound cards, forming the indispensable foundation of the entire Linux audio stack.
 
 First connect it to a laptop and check `dmesg` for any clue of the driver:
 ```bash
@@ -604,11 +675,7 @@ From there I learned it uses the `CM109` driver, then go to pico kernel menu con
 
 <img width="1335" height="657" alt="image" src="https://github.com/user-attachments/assets/a66af298-c343-4555-a968-e58a3ae4d9a8" />
 
-Include as built-in driver, go to buildroot menu config and include the ALSA tools as well:
-
-> ALSA (Advanced Linux Sound Architecture) serves as the fundamental audio framework in Linux, providing the essential kernel drivers, libraries, and utilities that enable communication between software applications and sound hardware. It manages the low-level interaction with audio devices, allowing for playback, recording, and volume control directly at the driver level. While modern desktop environments typically use higher-level sound servers like PulseAudio on top of ALSA to handle advanced features such as audio mixing from multiple applications and network streaming, ALSA itself remains the core layer that directly interfaces with the physical sound cards, forming the indispensable foundation of the entire Linux audio stack.
-
-Rebuild all images and boot pico, once inside, plug the USB dongle and check `lsusb`, `dmesg` and/or `aplay -l` for any sign of life from it: 
+Include as built-in driver, go to buildroot menu and include the ALSA tools, rebuild all images and boot pico, once inside, plug the USB dongle and check `lsusb`, `dmesg` and/or `aplay -l` for any sign of life from it: 
 ```bash
 $ aplay -l
 **** List of PLAYBACK Hardware Devices ****
@@ -673,6 +740,8 @@ And that solved the driver problem, but there still [one thing left](#setup-wifi
 [![Watch the video](https://img.youtube.com/vi/luljqjPSWxw/0.jpg)](https://www.youtube.com/watch?v=luljqjPSWxw)
 
 # Setup Wifi connection
+>`ifconfig` configures network interfaces and IP addresses. `iw` manages the wireless link, handling scanning and connection to networks. `wpa_supplicant` is the background service that performs the secure authentication (WPA/WPA2) to encrypted Wi-Fi networks using a password. Together, they enable a Linux system to connect to Wi-Fi: `iw` sets up the link, `wpa_supplicant` handles security, and `ifconfig` assigns the IP address for full network access.
+
 First make sure you you got the proper drivers for your network device, then:
 1. Install `ifconfig`, `wpa_supplicant` and `iw`, using Buildroot menu
 2. Rebuild all images, copy to SD card and boot pico
@@ -700,6 +769,10 @@ iface wlan0 inet dhcp
 > To scan nearby networks use `iw wlan0 scan` (where `wlan0` is your interface name)
 
 # USB Camera
+<img width="541" height="487" alt="image" src="https://github.com/user-attachments/assets/b517a95c-6ac7-41dd-b496-a8f61a9e4d21" />
+
+>The Video4Linux2 (V4L2) subsystem in Linux provides a unified framework for handling video capture devices, with UVC (USB Video Class) being a critical specification that ensures interoperability for USB cameras. When a UVC-compliant USB webcam is connected, the Linux kernel loads the `uvcvideo` driver, which automatically detects the device and exposes it as a V4L2-compatible interface (typically `/dev/video0`). This abstraction allows applications to interact with the camera through standard V4L2 system calls (ioctls) to query capabilities, negotiate video formats (like MJPEG, YUYV, or H.264), set resolution and frame rate, and manage data streaming via memory-mapped or user-pointer buffers. The UVC driver handles all protocol-specific communication with the camera, while V4L2 provides a consistent API for applications—from simple command-line tools like `fswebcam` to complex GUI software like `guvcview`—enabling seamless video capture, streaming, and control (e.g., adjusting brightness or focus) without requiring device-specific code.
+
 Star by following [this](https://wiki.luckfox.com/Luckfox-Pico/Luckfox-Pico-RV1103/Luckfox-Pico-Plus-Mini/Luckfox-Pico-pinout/Luckfox-Pico-USB#usb-camera). Identify the camera with `v4l2-ctl --list-devices`, and look for which video number was assigned after the `UVC Camera` part:
 ```bash
 [   23.512224] rkcif_tools_id1: update sensor info failed -19
@@ -737,11 +810,10 @@ Here is the difference in RAM usage for:
 [  310.102798] oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),task=ffmpeg,pid=760,uid=0
 [  310.102864] Out of memory: Killed process 760 (ffmpeg) total-vm:39616kB, anon-rss:1244kB, file-rss:0kB, shmem-rss:0kB,
 ```
-
 > [!IMPORTANT]
-> There is [this](https://github.com/nyanmisaka/ffmpeg-rockchip) ffmpeg rockchip version that seems to support hardware encoding, but may be tricky to compile
+> There is this [ffmpeg](https://github.com/nyanmisaka/ffmpeg-rockchip) version that seems to support Rockchip hardware video encoding/decoding, but it may be tricky to compile
 
-Here is a test streaming over wifi to a VLC client at 320x240, controlling camera zoom and brightness:  
+Here is a test streaming at 320x240 over wifi to a client using VLC, controlling camera zoom and brightness:  
 [![Watch the video](https://img.youtube.com/vi/RVOrBzaeajE/0.jpg)](https://www.youtube.com/watch?v=RVOrBzaeajE)
 
 # Cross-compilation
@@ -765,4 +837,3 @@ $ ls -lh fbdoom
 $ file fbdoom
 fbdoom: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linked, BuildID[sha1]=df3e06c85e09e42e47937815fa04090df95157f9, for GNU/Linux 3.2.0, stripped
 ```
-Copy it to pico and run with `./fbdoom -iwad doom1.wad` (you'll need a .wad file and a `/dev/fb0` framebuffer)
