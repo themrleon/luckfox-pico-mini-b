@@ -62,7 +62,7 @@ To start quickly, plug your SD card on the host machine and download `Ubuntu_Luc
 https://drive.google.com/drive/folders/14kFWY93MZ4Zga4ke2PVQgUs1y9xcMG0S
 
 Extract and run the [`blkenvflash`](#blkenvflashpy-tool) tool inside:
-```
+```bash
 $ unzip Ubuntu_Luckfox_Pico_Mini_B_MicroSD_250313.zip
 $ cd Ubuntu_Luckfox_Pico_Mini_B_MicroSD_250313
 $ sudo python3 blkenvflash.py /dev/sdb
@@ -98,7 +98,7 @@ There are two ways: **SDK** and **config tool** (this is a tool already inside t
 
 ### SDK
 From the SDK root folder edit `sysdrv/source/kernel/arch/arm/boot/dts/rv1103g-luckfox-pico-mini.dts` and change `dr_mode` to host:
-```
+```bash
 /**********USB**********/
 &usbdrd_dwc3 {
         status = "okay";
@@ -115,7 +115,7 @@ Note that it will only take effect after a reboot and also persist.
 
 # How to access Pico via USB cable
 Connect pico to computer via USB cable, after a while a new RNDIS / network interface should be detected:
-```
+```bash
 $ ifconfig 
 enxae935ce313b2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         inet6 fe80::6f2d:eea0:cff2:7aa6  prefixlen 64  scopeid 0x20<link>
@@ -132,12 +132,12 @@ Set the new interface ip to **172.32.0.100/16** (same subnet as the pico, which 
 <img width="569" height="545" alt="image" src="https://github.com/user-attachments/assets/52d58af2-b89f-4b4c-a920-e6c78e5009af" />  
 
 After applying the new setting, `ifconfig` should show the ip `172.32.0.100` was assigned to the interface:
-```
+```bash
 enxae935ce313b2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         inet 172.31.0.100  netmask 255.255.0.0  broadcast 172.31.255.255
 ```
 Now try to ping pico:
-```
+```bash
 $ ping 172.32.0.70
 PING 172.32.0.70 (172.32.0.70) 56(84) bytes of data.
 64 bytes from 172.32.0.70: icmp_seq=1 ttl=64 time=0.433 ms
@@ -145,7 +145,7 @@ PING 172.32.0.70 (172.32.0.70) 56(84) bytes of data.
 64 bytes from 172.32.0.70: icmp_seq=3 ttl=64 time=0.493 ms
 ```
 And scan pico open ports:  
-```
+```bash
 $ nmap 172.32.0.70
 Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-09-20 00:21 -03
 Nmap scan report for 172.32.0.70
@@ -166,7 +166,7 @@ $ ssh pico@172.32.0.70
 
 # How to connect via ADB
 Using the USB cable and in device mode, setup the RNDIS interface with `172.32.0.100`, and: 
-```
+```bash
 $ adb connect 172.32.0.93
 connected to 172.32.0.93:5555
 
@@ -178,7 +178,7 @@ List of devices attached
 $ adb -s 172.32.0.93:5555 shell
 ```
 And that is it, you are inside pico:
-```
+```bash
 # ls
 media          linuxrc        usr            opt            dev
 lib64          root           var            oem            bin
@@ -195,7 +195,7 @@ Using the USB cable and in device mode:
 4. Ping something like `ping www.google.com` to confirm it's working
 
 If you are having DNS issues, add `nameserver 8.8.8.8` to `/etc/resolv.conf` (Google DNS). To persist the changes: 
-```
+```bash
 $ sudo bash -c 'echo "route add default gw 172.32.0.100" >> /etc/rc.local'
 $ sudo chmod +x /etc/rc.local
 ```
@@ -226,7 +226,7 @@ https://github.com/LuckfoxTECH/luckfox-pico/issues/273#issuecomment-2870461201
 https://github.com/LuckfoxTECH/luckfox-pico/issues/288#issuecomment-2933309966  
 
 I am using the latest SDK version from master branch as of now, which is this:
-```
+```bash
 commit 994243753789e1b40ef91122e8b3688aae8f01b8 (HEAD -> main, origin/main, origin/HEAD)
 Date:   Thu Aug 14 14:38:50 2025 +0800
 ```
@@ -246,7 +246,7 @@ The SDK is where everything is done from scratch, giving us full autonomy. The S
 https://github.com/LuckfoxTECH/luckfox-pico
 
 Once you ran the build script successfully the images will be ready at `output/image`:
-```
+```bash
 $ cd output/image
 $ ls -lh
 -rw-r--r-- 1 root root 3,4M Sep 19 17:46 boot.img
@@ -305,7 +305,7 @@ This is a third party tool that allows to copy all the `.img` files to the SD ca
 > Since this tool will be used very often, I recommend you to keep it ready in your environment path (like `/usr/bin`)
 
 You must run the tool from the folder where all the `.img` files are, with `sudo` and `python3`, also make sure to know where is your SD card entry, in this example `/dev/sdb` (don't use partitions like `sdb1`):  
-```
+```bash
 $ sudo python3 blkenvflash.py /dev/sdb
 == blkenvflash.py 0.0.1 ==
 writing to /dev/sdb
@@ -345,26 +345,26 @@ From the SDK root folder `sudo ./build.sh kernelconfig`, once you are done run `
 # Why there isn't 64MB RAM available ?
 The SDK generate images allocating 24MB of RAM to the CMA, you can claim it back by setting to 1MB as per Luckfox recommendation, but first check your OS RAM situation:  
 CMA using 24MB of RAM, only 34MB RAM left:
-```
+```bash
 $ cat /proc/meminfo 
 MemTotal:          34316 kB
 CmaTotal:          24576 kB
 ```
 
 Full RAM available:
-```
+```bash
 $ cat /proc/meminfo 
 MemTotal:          57372 kB
 CmaTotal:           1024 kB
 ```
 You can make a persistent change but that needs to compile and generate new images with the SDK, or change the kernel boot param `rk_dma_heap_cma=1M` to quickly test it. To use the SDK, from its root folder, edit `RK_BOOTARGS_CMA_SIZE="1M"` here:
-```
+```bash
 $ nano project/cfg/BoardConfig_IPC/BoardConfig-SD_CARD-Buildroot-RV1103_Luckfox_Pico_Mini-IPC.mk
 ```
 
 # How can I see the kernel boot args being used in my OS ?
 Note the boot args are being passed by the U-Boot bootloader, but Linux keeps a copy here:
-```
+```bash
 $ cat /proc/cmdline 
 user_debug=31 storagemedia=sd androidboot.storagemedia=sd androidboot.mode=normal  rootwait earlycon=uart8250,mmio32,0xff4c0000 console=ttyFIQ0 root=/dev/mmcblk1p7 snd_soc_core.prealloc_buffer_size_kbytes=16 coherent_pool=0 blkdevparts=mmcblk1:32K(env),512K@32K(idblock),256K(uboot),32M(boot),512M(oem),256M(userdata),6G(rootfs) rootfstype=ext4 rk_dma_heap_cma=1M androidboot.fwver=uboot-03/13/2025
 ```
@@ -413,7 +413,7 @@ To avoid the annoying process of connecting pico as an USB device / RNDIS interf
 <img width="1130" height="810" alt="image" src="https://github.com/user-attachments/assets/d02343b3-38e3-4e39-941b-9a0693e4acd0" />
 
 I am using a ch341 based chip, created at `ttyUSB0`:
-```
+```bash
 [ 8832.198782] usb 2-1: new full-speed USB device number 7 using xhci_hcd
 [ 8832.323090] usb 2-1: New USB device found, idVendor=1a86, idProduct=7523, bcdDevice= 2.64
 [ 8832.323108] usb 2-1: New USB device strings: Mfr=0, Product=2, SerialNumber=0
@@ -457,7 +457,7 @@ In order to customize the root file system (`/`), we can use an overlay, that wa
 <img width="1329" height="660" alt="image" src="https://github.com/user-attachments/assets/284b7b85-4448-4c66-8d88-485d79e336f9" />
 
 In this example the `custom-overlay` folder is in the SDK root path, now to add a file that will end up in the OS/rootfs image `/usr/bin` folder, create that same path in the overlay and copy some binary there:
-```
+```bash
 $ cd custom-overlay
 $ mkdir -p usr/bin
 $ cp <binary> <sdk root folder>/custom-overlay/usr/bin
@@ -473,7 +473,7 @@ Check [this](https://github.com/themrleon/rpi-experiments?tab=readme-ov-file#wha
 That is not a 'regular' framebuffer in the sense that everything including the console output is being drawn there too, but rather a **virtual framebuffer**, so it's empty, and forever will be, unless we draw something there on purpose.  
 
 It can be added to the kernel either as built-in or external module. To use as a module:
-```
+```bash
 $ cd /oem/usr/ko
 $ insmod vfb.ko vfb_enable=1
 $ lsmod
@@ -484,7 +484,7 @@ $ ls /dev/fb0
 /dev/fb0
 ```
 Now set a new size and color:
-```
+```bash
 $ fbset -g 320 200 320 200 16
 $ fbset -i
 mode "320x200-367"
@@ -512,7 +512,7 @@ To use as a built-in module, check the example [here](#u-boot-and-kernel-paramet
 The U-boot bootloader is the one passing the parameters to the Linux kernel, they can be changed at runtime or compile-time. At runtime is easier/quicker to test things, but they won't persist.  
 
 To enter in the bootloader command line, hold `ctrl + c` and power pico up only after, until it enters the command line (make sure to be using the [UART connection](#uart-connection). Let's do an example where we want to add `video=vfb` to the kernel, from the u-boot command line check the current variables:
-```
+```bash
 => printenv 
 arch=arm
 autoload=no
@@ -550,14 +550,14 @@ vendor=rockchip
 Environment size: 1364/262140 bytes
 ```
 Concatenate to `sys_bootargs`, save and boot:
-```
+```bash
 => setenv sys_bootargs ${sys_bootargs} video=vfb
 => saveenv 
 Saving Environment to envf...
 => boot
 ```
 In the OS check if `video=vfb` was passed:
-```
+```bash
 # cat /proc/cmdline 
 ...
 rk_dma_heap_cma=1M video=vfb androidboot.fwver=uboot-09/24/2025
@@ -569,7 +569,7 @@ Note the parameter will be lost after reboot. To persist, we can 'SQL inject' ou
 3. Run `sudo ./build.sh`
 
 Check with `cat output/image/.env.txt`:
-```
+```bash
 ...
 sd_parts=mmcblk0:16K@512(env),512K@32K(idblock),4M(uboot) video=vfb
 ```
@@ -587,7 +587,7 @@ You can have all that and much more using USB dongles, however it all comes down
 <img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/1707d395-797f-4906-82de-453fff97c4ba" />
 
 First connect it to a laptop and check `dmesg` for any clue of the driver:
-```
+```bash
 [ 1413.174330] usb 1-1: New USB device found, idVendor=0d8c, idProduct=000e, bcdDevice= 1.00
 [ 1413.174348] usb 1-1: New USB device strings: Mfr=0, Product=1, SerialNumber=0
 [ 1413.174353] usb 1-1: Product: Generic USB Audio Device   
@@ -609,7 +609,7 @@ Include as built-in driver, go to buildroot menu config and include the ALSA too
 > ALSA (Advanced Linux Sound Architecture) serves as the fundamental audio framework in Linux, providing the essential kernel drivers, libraries, and utilities that enable communication between software applications and sound hardware. It manages the low-level interaction with audio devices, allowing for playback, recording, and volume control directly at the driver level. While modern desktop environments typically use higher-level sound servers like PulseAudio on top of ALSA to handle advanced features such as audio mixing from multiple applications and network streaming, ALSA itself remains the core layer that directly interfaces with the physical sound cards, forming the indispensable foundation of the entire Linux audio stack.
 
 Rebuild all images and boot pico, once inside, plug the USB dongle and check `lsusb`, `dmesg` and/or `aplay -l` for any sign of life from it: 
-```
+```bash
 $ aplay -l
 **** List of PLAYBACK Hardware Devices ****
 card 0: rvacodec [rv-acodec], device 0: ffae0000.i2s-rv1106-hifi ff480000.acodec-0 [ffae0000.i2s-rv1106-hifi ff480000.acodec-0]
@@ -630,7 +630,7 @@ Close `alsamixer` and test with some MP3 file using `mpg123`, ex: `mpg123 -a hw:
 <img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/88d6fc2c-9abd-444b-836e-5a7a9f73521d" />
 
 Start by checking if the kernel already has your device drivers, use the **product id** that you get from `lsusb`, in my case `Bus 002 Device 011: ID 0bda:8176 Realtek Semiconductor Corp. RTL8188CUS 802.11n WLAN Adapter`, where `8176` is the product id. From the SDK root folder do a dumb search for that id: `grep -r -s "0x8176"`, the results are:
-```
+```bash
 sysdrv/source/kernel/drivers/net/wireless/realtek/rtl8xxxu/rtl8xxxu_core.c:             case 0x8176:
 sysdrv/source/kernel/drivers/net/wireless/realtek/rtl8xxxu/rtl8xxxu_core.c:{USB_DEVICE_AND_INTERFACE_INFO(USB_VENDOR_ID_REALTEK, 0x8176, 0xff, 0xff, 0xff),
 sysdrv/source/kernel/drivers/net/wireless/realtek/rtlwifi/rtl8192de/led.c:              if ((rtlpriv->efuse.eeprom_did == 0x8176) ||
@@ -647,7 +647,7 @@ Although `lsusb` says mine is a `RTL8188CUS`, and after trying a couple of them,
 <img width="1341" height="287" alt="image" src="https://github.com/user-attachments/assets/483f4847-2004-44c8-ad0c-2e816a53433b" />
 
 Then rebuild all and test. In this case I was still getting errors about missing bin files:
-```
+```bash
 [    1.205932] rtl8192cu: Board Type 1
 [    1.206089] rtl_usb: rx_max_size 15360, rx_urb_num 8, in_ep 1
 [    1.206204] rtl8192cu: Loading firmware rtlwifi/rtl8192cufw_TMSC.bin
@@ -661,7 +661,7 @@ After some search on internet I found this:
 https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/tree/rtlwifi
 
 Which contains those Realtek .bin files, then I downloaded both `rtl8192cufw_TMSC.bin` and `rtl8192cufw.bin` and put in my custom overlay folder like so:
-```
+```bash
 ── lib
 │   ├── firmware
 │   │   └── rtlwifi
@@ -673,22 +673,76 @@ And that solved the driver problem, but there still [one thing left](#setup-wifi
 [![Watch the video](https://img.youtube.com/vi/luljqjPSWxw/0.jpg)](https://www.youtube.com/watch?v=luljqjPSWxw)
 
 # Setup Wifi connection
-Make sure you are inside pico and have the proper drivers for your network device already. These are the tools needed: `ifconfig`, `wpa_supplicant` and `iw`, add them in the Buildroot menu, rebuild all images and boot pico, get your interface name with `ifconfig -a`, in this case `wlan0`, then do `ifconfig wlan0 up`, now create this file:
-```
-├── etc
-│   └── wpa_supplicant.conf
-```
-with this inside:
-```
+First make sure you you got the proper drivers for your network device, then:
+1. Install `ifconfig`, `wpa_supplicant` and `iw`, using Buildroot menu
+2. Rebuild all images, copy to SD card and boot pico
+3. Find your interface name with `ifconfig -a` (in this example `wlan0`)
+4. Run `ifconfig wlan0 up`
+5. Create `/etc/wpa_supplicant.conf` with:
+```bash
 network={
  ssid="your network name"
  psk="password"
 }
 ```
-Run `wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant.conf` and finally `udhcpc -i wlan0` to get an ip, test your connection with ping, ex: `ping www.google.com`.
+6. Run `wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant.conf` 
+7. Run `udhcpc -i wlan0` to get an ip
+8. Test, ex: `ping www.google.com`
+
+To make persistent changes, add to `/etc/network/interfaces` this:
+```bash
+auto wlan0
+iface wlan0 inet dhcp
+    wpa-conf /etc/wpa_supplicant.conf
+```
 
 > [!TIP]
-> You can scan nearby networks with `iw wlan0 scan` (where `wlan0` is your interface name)
+> To scan nearby networks use `iw wlan0 scan` (where `wlan0` is your interface name)
+
+# USB Camera
+Star by following [this](https://wiki.luckfox.com/Luckfox-Pico/Luckfox-Pico-RV1103/Luckfox-Pico-Plus-Mini/Luckfox-Pico-pinout/Luckfox-Pico-USB#usb-camera). Identify the camera with `v4l2-ctl --list-devices`, and look for which video number was assigned after the `UVC Camera` part:
+```bash
+[   23.512224] rkcif_tools_id1: update sensor info failed -19
+UVC Camera (046d:0821) (usb-xhci-hcd.0.auto-1.1):
+[   23.512296] rkcif-mipi-lvds: rkcif_update_sensor_info: stream[2] get remote terminal sensor failed!
+        /dev/video0
+[   23.512318] rkcif_tools_id2: update sensor info failed -19
+        /dev/video1
+        /dev/media0
+```
+In this case the camera is `/dev/video0`, use that for the tools:
+
+* Supported camera formats and resolutions: `v4l2-ctl --device=/dev/video0 --list-formats-ext`  
+* Supported camera controls: `v4l2-ctl --device=/dev/video0 --list-ctrls`  
+* Set camera controls: `v4l2-ctl --device=/dev/video0 --set-ctrl=<name>=<value>`  
+* Take pictures: `fswebcam -d /dev/video0 -r 320x240 image.jpg`  
+* Record video: `ffmpeg -f v4l2 -video_size 320x240 -framerate 30 -i /dev/video0 video.mp4`  
+* Stream video: `ffmpeg -f v4l2 -video_size 320x240 -framerate 30 -i /dev/video0 -f mpegts "udp://<VLC client ip>:5000"`  
+
+> [!WARNING]
+> Unfortunately due to the low amount of RAM in pico, higher resolutions will crash the process  
+> Reducing FPS won't help since that seems to affect only CPU usage  
+> Higher resolutions work with pictures, but they also crash after a certain point  
+> In my tests maximum video before crash was 480x320 and for picture 1600x1200  
+
+Here is the difference in RAM usage for:  
+320x240 video:  
+<img width="1337" height="180" alt="image" src="https://github.com/user-attachments/assets/a9161c84-abcb-4d58-b1a7-5a3d9fda7780" />
+
+480x320 video:  
+<img width="1337" height="212" alt="image" src="https://github.com/user-attachments/assets/d846dced-cd92-4077-88d3-74fae41552a2" />
+
+640x480 video already crash:
+```bash
+[  310.102798] oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),task=ffmpeg,pid=760,uid=0
+[  310.102864] Out of memory: Killed process 760 (ffmpeg) total-vm:39616kB, anon-rss:1244kB, file-rss:0kB, shmem-rss:0kB,
+```
+
+> [!IMPORTANT]
+> There is [this](https://github.com/nyanmisaka/ffmpeg-rockchip) ffmpeg rockchip version that seems to support hardware encoding, but may be tricky to compile
+
+Here is a test streaming over wifi to a VLC client at 320x240, controlling camera zoom and brightness:  
+[![Watch the video](https://img.youtube.com/vi/RVOrBzaeajE/0.jpg)](https://www.youtube.com/watch?v=RVOrBzaeajE)
 
 # Cross-compilation
 To cross-compile stuff to pico let's use `fbDOOM` as an example. If you installed the SDK at some point you did this:
