@@ -794,7 +794,8 @@ iface wlan0 inet dhcp
 ```
 
 > [!TIP]
-> To scan nearby networks use `iw wlan0 scan` (where `wlan0` is your interface name)
+> To scan nearby networks use `iw wlan0 scan` (where `wlan0` is your interface name)  
+> To test network speed use `iperf3 -s` on a server (in the same network) and `iperf3 -c <server ip>`
 
 # Cross-compilation
 To cross-compile stuff to pico let's use `fbDOOM` as an example. If you installed the SDK at some point you did this:
