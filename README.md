@@ -518,7 +518,7 @@ A couple things are needed:
 8. Run vnc server: `x11vnc -rawfb console -auth /dev/null -noxdamage -forever -shared  -repeat -defer 0 -wait 0  -noxinerama -nowf  -nowcr -speeds modem -tightfilexfer`
 9. Now from another device use a vnc client to access the vnc server using pico's ip, ex on Lubuntu: `vncviewer -SecurityTypes None <pico ip>:0 -CompressLevel 0 -QualityLevel 0 -FullColor 0 -PreferredEncoding raw -AutoSelect=0`
 
-# Custom Overlay
+# Custom overlay
 In order to customize the root file system (`/`), we can use an overlay, that way it's possible to persist (and overwrite) the rootfs partition image. Go to **[Buildroot menu](#customizing-buildroot) -> System Configuration -> Root filesystem overlay directories** and add an absolute path to your own custom overlay folder:  
 
 <img width="1329" height="660" alt="image" src="https://github.com/user-attachments/assets/284b7b85-4448-4c66-8d88-485d79e336f9" />
@@ -532,7 +532,7 @@ $ cp <binary from somewhere> usr/bin
 > [!IMPORTANT]
 > This will be very useful to overwrite system files and add pre-baked data like network credentials, users, passwords, custom binaries and drivers
 
-# Getting a Framebuffer
+# Getting a framebuffer
 Check [this](https://github.com/themrleon/rpi-experiments?tab=readme-ov-file#what-is-framebuffer) if you are unfamiliar with the Linux framebuffer and what it can do. On pico I tried all the framebuffer options I could find on the kernel configuration, including device tree changes and kernel boot args, but nothing worked, except this one:
 
 <img width="1133" height="572" alt="image" src="https://github.com/user-attachments/assets/d277cecf-e7a2-442b-8037-fcce1bafac67" />
@@ -648,11 +648,11 @@ That is it! from now on it will persist on new images.
 # Wifi, Bluetooth and Audio
 <img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/92b338e0-7988-4fd6-bf4d-5ef862e4b559" />
 
-You can have all that and much more using USB devices, however it all comes down to driver support, you'll have to find the right driver for your device and OS. Below are examples of how I got audio, wifi and camera working.
+You can have all that and much more using USB devices, however it all comes down to driver support, you'll have to find the right driver for your device and OS. Below are examples of how I got audio, camera and wifi working.
 > [!IMPORTANT]
 > Make sure to use a powered USB hub
 
-## Audio USB dongle
+## USB sound card
 <img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/1707d395-797f-4906-82de-453fff97c4ba" />
 
 > ALSA (Advanced Linux Sound Architecture) serves as the fundamental audio framework in Linux, providing the essential kernel drivers, libraries, and utilities that enable communication between software applications and sound hardware. It manages the low-level interaction with audio devices, allowing for playback, recording, and volume control directly at the driver level. While modern desktop environments typically use higher-level sound servers like PulseAudio on top of ALSA to handle advanced features such as audio mixing from multiple applications and network streaming, ALSA itself remains the core layer that directly interfaces with the physical sound cards, forming the indispensable foundation of the entire Linux audio stack.
@@ -693,7 +693,55 @@ In this case it was detected as `Generic USB Audio Device` (`card 1`), keeping t
 Close `alsamixer` and test with some MP3 file using `mpg123`, ex: `mpg123 -a hw:1,0 sample.mp3` (where 1 is due to `card1`). And here is the result:  
 [![Watch the video](https://img.youtube.com/vi/3sC8ylrmZFI/0.jpg)](https://www.youtube.com/watch?v=3sC8ylrmZFI)
 
-## Wifi USB dongle
+## USB camera
+<img width="541" height="487" alt="image" src="https://github.com/user-attachments/assets/b517a95c-6ac7-41dd-b496-a8f61a9e4d21" />
+
+>The Video4Linux2 (V4L2) subsystem in Linux provides a unified framework for handling video capture devices, with UVC (USB Video Class) being a critical specification that ensures interoperability for USB cameras. When a UVC-compliant USB webcam is connected, the Linux kernel loads the `uvcvideo` driver, which automatically detects the device and exposes it as a V4L2-compatible interface (typically `/dev/video0`). This abstraction allows applications to interact with the camera through standard V4L2 system calls (ioctls) to query capabilities, negotiate video formats (like MJPEG, YUYV, or H.264), set resolution and frame rate, and manage data streaming via memory-mapped or user-pointer buffers. The UVC driver handles all protocol-specific communication with the camera, while V4L2 provides a consistent API for applications—from simple command-line tools like `fswebcam` to complex GUI software like `guvcview`—enabling seamless video capture, streaming, and control (e.g., adjusting brightness or focus) without requiring device-specific code.
+
+Star by following [this](https://wiki.luckfox.com/Luckfox-Pico/Luckfox-Pico-RV1103/Luckfox-Pico-Plus-Mini/Luckfox-Pico-pinout/Luckfox-Pico-USB#usb-camera). Identify the camera with `v4l2-ctl --list-devices`, and look for which video number was assigned after the `UVC Camera` part:
+```bash
+[   23.512224] rkcif_tools_id1: update sensor info failed -19
+UVC Camera (046d:0821) (usb-xhci-hcd.0.auto-1.1):
+[   23.512296] rkcif-mipi-lvds: rkcif_update_sensor_info: stream[2] get remote terminal sensor failed!
+        /dev/video0
+[   23.512318] rkcif_tools_id2: update sensor info failed -19
+        /dev/video1
+        /dev/media0
+```
+In this case the camera is `/dev/video0`, use that for the tools:
+
+* Supported camera formats and resolutions: `v4l2-ctl --device=/dev/video0 --list-formats-ext`  
+* Supported camera controls: `v4l2-ctl --device=/dev/video0 --list-ctrls`  
+* Set camera controls: `v4l2-ctl --device=/dev/video0 --set-ctrl=<name>=<value>`  
+* Take pictures: `fswebcam -d /dev/video0 -r 320x240 image.jpg`  
+* Record video: `ffmpeg -f v4l2 -video_size 320x240 -framerate 30 -i /dev/video0 video.mp4`  
+* Stream video: `ffmpeg -f v4l2 -video_size 320x240 -framerate 30 -i /dev/video0 -f mpegts "udp://<VLC client ip>:5000"`  
+
+> [!WARNING]
+> Unfortunately due to the low amount of RAM in pico, higher resolutions will crash the process  
+> Reducing FPS won't help since that seems to affect only CPU usage  
+> Higher resolutions work with pictures, but they also crash after a certain point  
+> In my tests maximum video before crash was 480x320 and for picture 1600x1200  
+
+Here is the difference in RAM usage for:  
+320x240 video:  
+<img width="1337" height="180" alt="image" src="https://github.com/user-attachments/assets/a9161c84-abcb-4d58-b1a7-5a3d9fda7780" />
+
+480x320 video:  
+<img width="1337" height="212" alt="image" src="https://github.com/user-attachments/assets/d846dced-cd92-4077-88d3-74fae41552a2" />
+
+And at 640x480 it already crashes:
+```bash
+[  310.102798] oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),task=ffmpeg,pid=760,uid=0
+[  310.102864] Out of memory: Killed process 760 (ffmpeg) total-vm:39616kB, anon-rss:1244kB, file-rss:0kB, shmem-rss:0kB,
+```
+> [!IMPORTANT]
+> There is this [ffmpeg](https://github.com/nyanmisaka/ffmpeg-rockchip) version that seems to support Rockchip hardware video encoding/decoding, but it may be tricky to compile
+
+Here is a test streaming at 320x240 over wifi to a client using VLC, controlling camera zoom and brightness:  
+[![Watch the video](https://img.youtube.com/vi/RVOrBzaeajE/0.jpg)](https://www.youtube.com/watch?v=RVOrBzaeajE)
+
+## USB wifi
 <img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/88d6fc2c-9abd-444b-836e-5a7a9f73521d" />
 
 Start by checking if the kernel already has your device drivers, use the **product id** that you get from `lsusb`, in my case `Bus 002 Device 011: ID 0bda:8176 Realtek Semiconductor Corp. RTL8188CUS 802.11n WLAN Adapter`, where `8176` is the product id. From the SDK root folder do a dumb search for that id: `grep -r -s "0x8176"`, the results are:
@@ -739,7 +787,7 @@ Which contains those Realtek .bin files, then I downloaded both `rtl8192cufw_TMS
 And that solved the driver problem, but there still [one thing left](#setup-wifi-connection). Here is a test running DOOM over the wifi connection with pico completely isolated using a powerbank (laggy due to the poor 2.4Ghz connection):  
 [![Watch the video](https://img.youtube.com/vi/luljqjPSWxw/0.jpg)](https://www.youtube.com/watch?v=luljqjPSWxw)
 
-# Setup Wifi connection
+# Setup wifi connection
 >`ifconfig` configures network interfaces and IP addresses. `iw` manages the wireless link, handling scanning and connection to networks. `wpa_supplicant` is the background service that performs the secure authentication (WPA/WPA2) to encrypted Wi-Fi networks using a password. Together, they enable a Linux system to connect to Wi-Fi: `iw` sets up the link, `wpa_supplicant` handles security, and `ifconfig` assigns the IP address for full network access.
 
 First make sure you you got the proper drivers for your network device, then:
@@ -768,54 +816,6 @@ iface wlan0 inet dhcp
 > [!TIP]
 > To scan nearby networks use `iw wlan0 scan` (where `wlan0` is your interface name)
 
-# USB Camera
-<img width="541" height="487" alt="image" src="https://github.com/user-attachments/assets/b517a95c-6ac7-41dd-b496-a8f61a9e4d21" />
-
->The Video4Linux2 (V4L2) subsystem in Linux provides a unified framework for handling video capture devices, with UVC (USB Video Class) being a critical specification that ensures interoperability for USB cameras. When a UVC-compliant USB webcam is connected, the Linux kernel loads the `uvcvideo` driver, which automatically detects the device and exposes it as a V4L2-compatible interface (typically `/dev/video0`). This abstraction allows applications to interact with the camera through standard V4L2 system calls (ioctls) to query capabilities, negotiate video formats (like MJPEG, YUYV, or H.264), set resolution and frame rate, and manage data streaming via memory-mapped or user-pointer buffers. The UVC driver handles all protocol-specific communication with the camera, while V4L2 provides a consistent API for applications—from simple command-line tools like `fswebcam` to complex GUI software like `guvcview`—enabling seamless video capture, streaming, and control (e.g., adjusting brightness or focus) without requiring device-specific code.
-
-Star by following [this](https://wiki.luckfox.com/Luckfox-Pico/Luckfox-Pico-RV1103/Luckfox-Pico-Plus-Mini/Luckfox-Pico-pinout/Luckfox-Pico-USB#usb-camera). Identify the camera with `v4l2-ctl --list-devices`, and look for which video number was assigned after the `UVC Camera` part:
-```bash
-[   23.512224] rkcif_tools_id1: update sensor info failed -19
-UVC Camera (046d:0821) (usb-xhci-hcd.0.auto-1.1):
-[   23.512296] rkcif-mipi-lvds: rkcif_update_sensor_info: stream[2] get remote terminal sensor failed!
-        /dev/video0
-[   23.512318] rkcif_tools_id2: update sensor info failed -19
-        /dev/video1
-        /dev/media0
-```
-In this case the camera is `/dev/video0`, use that for the tools:
-
-* Supported camera formats and resolutions: `v4l2-ctl --device=/dev/video0 --list-formats-ext`  
-* Supported camera controls: `v4l2-ctl --device=/dev/video0 --list-ctrls`  
-* Set camera controls: `v4l2-ctl --device=/dev/video0 --set-ctrl=<name>=<value>`  
-* Take pictures: `fswebcam -d /dev/video0 -r 320x240 image.jpg`  
-* Record video: `ffmpeg -f v4l2 -video_size 320x240 -framerate 30 -i /dev/video0 video.mp4`  
-* Stream video: `ffmpeg -f v4l2 -video_size 320x240 -framerate 30 -i /dev/video0 -f mpegts "udp://<VLC client ip>:5000"`  
-
-> [!WARNING]
-> Unfortunately due to the low amount of RAM in pico, higher resolutions will crash the process  
-> Reducing FPS won't help since that seems to affect only CPU usage  
-> Higher resolutions work with pictures, but they also crash after a certain point  
-> In my tests maximum video before crash was 480x320 and for picture 1600x1200  
-
-Here is the difference in RAM usage for:  
-320x240 video:  
-<img width="1337" height="180" alt="image" src="https://github.com/user-attachments/assets/a9161c84-abcb-4d58-b1a7-5a3d9fda7780" />
-
-480x320 video:  
-<img width="1337" height="212" alt="image" src="https://github.com/user-attachments/assets/d846dced-cd92-4077-88d3-74fae41552a2" />
-
-640x480 video already crash:
-```bash
-[  310.102798] oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),task=ffmpeg,pid=760,uid=0
-[  310.102864] Out of memory: Killed process 760 (ffmpeg) total-vm:39616kB, anon-rss:1244kB, file-rss:0kB, shmem-rss:0kB,
-```
-> [!IMPORTANT]
-> There is this [ffmpeg](https://github.com/nyanmisaka/ffmpeg-rockchip) version that seems to support Rockchip hardware video encoding/decoding, but it may be tricky to compile
-
-Here is a test streaming at 320x240 over wifi to a client using VLC, controlling camera zoom and brightness:  
-[![Watch the video](https://img.youtube.com/vi/RVOrBzaeajE/0.jpg)](https://www.youtube.com/watch?v=RVOrBzaeajE)
-
 # Cross-compilation
 To cross-compile stuff to pico let's use `fbDOOM` as an example. If you installed the SDK at some point you did this:
 ```
@@ -837,3 +837,14 @@ $ ls -lh fbdoom
 $ file fbdoom
 fbdoom: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linked, BuildID[sha1]=df3e06c85e09e42e47937815fa04090df95157f9, for GNU/Linux 3.2.0, stripped
 ```
+
+# Compilation inside pico
+Sometimes is just tricky or hard to cross-compile complex things, in thoses cases, you can use the pre-made Ubuntu image which already contains the toolchain and compile natively directly from the pico, will be slow but sometimes it's a sacrifice needed.  
+
+> [!WARNING]
+> Ubuntu is running the kernel version **5.10.160**, which hasn't its headers available in the `apt`, the closest available is **5.15.x**, however I managed to compile a wifi driver successfully by 'faking' the **5.10.160** headers, installing **5.15** via `apt` then creating a symbolic link to the **5.15** headers folder:
+> ```bash
+> $ sudo apt install linux-headers-generic-5.15
+> cd /lib/modules
+> $ ln -s 5.15.0-156-generic/ 5.10.160
+> ```
