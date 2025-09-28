@@ -165,6 +165,20 @@ $ ssh pico@172.32.0.70
 ```
 <img width="509" height="566" alt="image" src="https://github.com/user-attachments/assets/9dd0d830-4715-4a09-ba08-29721a95007b" />
 
+# How to transfer files to/from pico
+There are many ways, here are some handy ones.
+
+## Using network
+First make sure to have an SSH server installed, on the Ubuntu images it's already by default, on Buildroot select `openssh` and related tools server in the menu. SSH enables SFTP too, so you can use Filezilla or any other client to connect to pico (port 22) or for a command line only solution with `scp <source> <destination>`:  
+* Copy local `file.txt` to pico as **root** user, to `/root` folder: `scp file.txt root@172.32.0.70:`
+* Copy local `file.txt` to pico as **pico** user, to `/home/pico/luckfox` folder: `scp file.txt pico@172.32.0.70:luckfox`
+
+## Using external USB flash disk
+Put pico in USB host mode then connect a USB flash disk and mount, ex: `sudo mount /dev/sdb1 /mnt/mydrive`
+
+## Using custom overlay
+Use a custom folder that will end up inside pico images, follow [this](#custom-overlay).
+
 # How to connect via ADB
 Using the USB cable and in device mode, setup the RNDIS interface with `172.32.0.100`, and: 
 ```bash
@@ -575,75 +589,41 @@ Frame buffer device information:
 ```
 You can see these steps in the DOOM demo [video](#but-can-it-run-doom-). To use as a built-in module, check the example [here](#u-boot-and-kernel-parameters).
 
-# U-Boot and kernel parameters
-The U-boot bootloader is the one passing the parameters to the Linux kernel, they can be changed at runtime or compile-time. At runtime is easier/quicker to test things, but they won't persist.  
-
-To enter in the bootloader command line, hold `ctrl + c` and power pico up only after, until it enters the command line (make sure to be using the [UART connection](#uart-connection). Let's do an example where we want to add `video=vfb` to the kernel, from the u-boot command line check the current variables:
+# U-Boot and kernel boot args
+The U-boot bootloader is the one passing the boot arguments to the Linux kernel, they can be changed at runtime or compile-time. At runtime is easier/quicker to test things, but they won't persist after generating new images. To enter the bootloader hold `ctrl + c` and power up pico **only after** until it enters the command line, make sure to be using [UART connection](#uart-connection). Let's do an example adding `video=vfb` to the kernel args:
 ```bash
 => printenv 
-arch=arm
-autoload=no
-baudrate=115200
-blkdevparts=mmcblk1:32K(env),512K@32K(idblock),256K(uboot),32M(boot),512M(oem),256M(userdata),8G(rootfs)
-board=evb_rv1106
-board_name=evb_rv1106
-bootargs=storagemedia=sd androidboot.storagemedia=sd androidboot.mode=normal 
-bootcmd=boot_fit;boot_android ${devtype} ${devnum};
-bootdelay=0
-cpu=armv7
-devnum=1
-devtype=mmc
-eth1addr=3e:c0:21:c4:a9:01
-ethaddr=3a:c0:21:c4:a9:01
-fdt_addr_r=0x00c00000
-kernel_addr_c=0x00808000
-kernel_addr_r=0x00008000
-pxefile_addr_r=0x00c00000
-ramdisk_addr_r=0x000e00000
-rkimg_bootdev=if mmc dev 1 && rkimgtest mmc 1; then setenv devtype mmc; setenv devnum 1; echo Boot from SDcard;elif mmc d
-ev 0; then setenv devtype mmc; setenv devnum 0;elif mtd_blk dev 0; then setenv devtype mtd; setenv devnum 0;elif mtd_blk 
-dev 1; then setenv devtype mtd; setenv devnum 1;elif mtd_blk dev 2; then setenv devtype mtd; setenv devnum 2;elif rknand 
-dev 0; then setenv devtype rknand; setenv devnum 0;elif rksfc dev 0; then setenv devtype spinand; setenv devnum 0;elif rk
-sfc dev 1; then setenv devtype spinor; setenv devnum 1;else;setenv devtype ramdisk; setenv devnum 0;fi; 
-scriptaddr=0x00b00000
-serial#=59f7d9fda1da0922
-soc=rockchip
-stderr=serial
-stdin=serial
-stdout=serial
+...
 sys_bootargs= root=/dev/mmcblk1p7 rootfstype=ext4 rk_dma_heap_cma=1M
-vendor=rockchip
-
-Environment size: 1364/262140 bytes
-```
-Concatenate to `sys_bootargs`, save and boot:
-```bash
+...
 => setenv sys_bootargs ${sys_bootargs} video=vfb
-=> saveenv 
-Saving Environment to envf...
 => boot
 ```
+
+> [!TIP]
+> To persist run `saveenv` after `setenv`
+
 In the OS check if `video=vfb` was passed:
 ```bash
-# cat /proc/cmdline 
+$ cat /proc/cmdline 
 ...
-rk_dma_heap_cma=1M video=vfb androidboot.fwver=uboot-09/24/2025
+1:32K(env),512K@32K(idblock),256K(uboot),32M(boot),512M(oem),256M(userdata),6G(rootfs) video=vfb rootfstype=ext4 rk_dma_h
+...
 ```
 
-Note the parameter will be lost after reboot. To persist, we can 'SQL inject' our way by leveraging the existing `RK_BOOTARGS_CMA_SIZE` variable, at compile-time. From the SDK root folder:
-1. Edit `project/cfg/BoardConfig_IPC/BoardConfig-SD_CARD-Buildroot-RV1103_Luckfox_Pico_Mini-IPC.mk`
-2. Change `export RK_BOOTARGS_CMA_SIZE="1M"` to `export RK_BOOTARGS_CMA_SIZE="1M video=vfb"`
+To persist at compile-time, so that new images will have the args, from the SDK root folder:
+1. Edit `build.sh`
+2. Change `SYS_BOOTARGS="sys_bootargs="` to `SYS_BOOTARGS="sys_bootargs= video=vfb"`
 3. Run `sudo ./build.sh`
 
 Check with `cat output/image/.env.txt`:
 ```bash
 ...
-sd_parts=mmcblk0:16K@512(env),512K@32K(idblock),4M(uboot) video=vfb
+sys_bootargs= video=vfb root=/dev/mmcblk1p7 rootfstype=ext4 rk_dma_heap_cma=1M
 ```
 
-That is it! from now on it will persist on new images.
 > [!WARNING]
-> Editing `.env.txt` directly to add kernel parameters doesn't work
+> Editing `.env.txt` directly to add kernel args doesn't work
 
 # Wifi, Bluetooth and Audio
 <img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/92b338e0-7988-4fd6-bf4d-5ef862e4b559" />
@@ -840,11 +820,3 @@ fbdoom: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linke
 
 # Compilation inside pico
 Sometimes is just tricky or hard to cross-compile complex things, in thoses cases, you can use the pre-made Ubuntu image which already contains the toolchain and compile natively directly from the pico, will be slow but sometimes it's a sacrifice needed.  
-
-> [!WARNING]
-> Ubuntu is running the kernel version **5.10.160**, which hasn't its headers available in the `apt`, the closest available is **5.15.x**, however I managed to compile a wifi driver successfully by 'faking' the **5.10.160** headers, installing **5.15** via `apt` then creating a symbolic link to the **5.15** headers folder:
-> ```bash
-> $ sudo apt install linux-headers-generic-5.15
-> cd /lib/modules
-> $ ln -s 5.15.0-156-generic/ 5.10.160
-> ```
