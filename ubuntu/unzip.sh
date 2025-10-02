@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cat Ubuntu_Luckfox_Pico_Mini_B_MicroSD_250313_* > Ubuntu_Luckfox_Pico_Mini_B_MicroSD_250313.zip
+unzip Ubuntu_Luckfox_Pico_Mini_B_MicroSD_250313.zip
