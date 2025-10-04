@@ -424,6 +424,29 @@ Laptop:
 | Raspberry Pi | 548.533 s | 1.9 MB/s |
 | Laptop | 2.89258 s | 354 MB/s |
 
+### Framebuffer
+Using [this tool](https://github.com/themrleon/fbmark?tab=readme-ov-file#tests). Benchmarking from an SSH connection Vs using a x11vnc session:
+
+Rectangle:
+| x11vnc | SSH |
+|------------|---------------|
+| 19.82 MPixels/s | 41.58 MPixels/s |
+
+Sierpinski:
+| Iterations | x11vnc | SSH |
+|------------|-|---------------|
+| 1024 iterations | 238.74 Frames/s | 953.31 Frames/s |
+| 2048 iterations | 216.80 Frames/s | 748.70 Frames/s |
+| 4096 iterations | 169.30 Frames/s | 524.43 Frames/s |
+| 8192 iterations | 122.61 Frames/s | 328.75 Frames/s |
+| 16384 iterations | 78.19 Frames/s | 188.11 Frames/s |
+| 32768 iterations | 42.96 Frames/s | 101.90 Frames/s |
+| 65536 iterations | 23.83 Frames/s | 53.14 Frames/s |
+| 131072 iterations | 12.46 Frames/s | 27.18 Frames/s |
+| 262144 iterations | 6.60 Frames/s | 13.69 Frames/s |
+
+Notice that since running `x11vnc` is a heavy task (x11vnc eats lots of CPU), that degrades the performance in half! (To compare with other devices use the SSH results since that is the one where the CPU is fully avaiable to the test)
+
 # Flash vs SD Card vs RAM benchmark
 But at least the onboard 128MB Flash chip is fast, right?! Get the `hdparm` tool from buildroot menu and:
 ```
