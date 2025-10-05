@@ -844,3 +844,67 @@ fbdoom: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linke
 
 # Compilation inside pico
 Sometimes is just tricky or hard to cross-compile complex things, in thoses cases, you can use the pre-made Ubuntu image which already contains the toolchain and compile natively directly from the pico, will be slow but sometimes it's a sacrifice needed.  
+
+# Hardware interfacing
+When connecting anything to pico, refer to the pinout board image, and keep an eye on the pin number (on the edge in blue) since that is what the code uses, also keep an eye on the voltage of each pin, some pins support 3.3v while others only 1.8v, anything above their range **will permanent damage or even kill the SoC**. Also keep in mind the board expose 3 voltages: 5v (from USB host cable), 3.3v (voltage regulator using the USB 5v) and 1.8v, use them when needed.  
+
+<img width="756" height="245" alt="image" src="https://github.com/user-attachments/assets/c32a421e-1b82-4c05-91d3-ece4a1c38d6a" />
+
+For example pin 54 supports 3.3v and can be PWM, UART or GPIO, but you must keep only one active at a time! use the `luckfox-config` tool to enable/disable what will be available for the pin.
+
+## GPIO
+> For the full thing follow the official guide: https://wiki.luckfox.com/Luckfox-Pico-Plus-Mini/GPIO
+
+The idea with GPIO is that you first export the pin you want to use, then configure it, then use, and once you are done, unexport to free the pin.
+
+* Setting pin 54 state
+```bash
+echo 54 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio54/direction
+echo 1 > /sys/class/gpio/gpio54/value
+echo 0 > /sys/class/gpio/gpio54/value
+echo 54 > /sys/class/gpio/unexport
+```
+
+* Reading pin 55 state
+```bash
+echo 55 > /sys/class/gpio/export         
+echo in > /sys/class/gpio/gpio55/direction 
+cat /sys/class/gpio/gpio55/value
+echo 55 > /sys/class/gpio/unexport
+```
+
+## PWM
+> For the full thing follow the official guide: https://wiki.luckfox.com/Luckfox-Pico-Plus-Mini/PWM
+
+The same idea from GPIO here, export the pin, configure it, use and unexport. Here we can use pin 54 (pwm10_m1), enable it in the `luckfox-config` tool:  
+
+<img width="341" height="177" alt="image" src="https://github.com/user-attachments/assets/863a5ad5-1f81-4f2c-96b6-93ddc8802d30" />  
+
+Here is an example on how to control a servo motor, in short they use a 20ms period whereas within that period a pulse between 1ms-2ms control the arm position, 1ms = 0 degrees and 2ms = 90 degrees (for 90 degree servos, some are 180 or even 360), being 1.5ms the center: 
+```
+$ echo 0 > /sys/class/pwm/pwmchip10/export
+$ echo 1 > /sys/class/pwm/pwmchip10/pwm0/enable
+$ echo "normal" > /sys/class/pwm/pwmchip10/pwm0/polarity 
+$ echo 20000000 > /sys/class/pwm/pwmchip10/pwm0/period
+$ echo 1000000 > /sys/class/pwm/pwmchip10/pwm0/duty_cycle
+$ echo 2000000 > /sys/class/pwm/pwmchip10/pwm0/duty_cycle
+$ echo 0 > /sys/class/pwm/pwmchip10/unexport
+```
+> [!IMPORTANT]
+> If you can't find any `pwm` entry in `/sys/class` make sure it's enabled in the kernel (in my case with Buildroot it wasn't, the Ubuntu image has it enabled already)
+> <img width="1060" height="552" alt="image" src="https://github.com/user-attachments/assets/c784a4c9-c8d2-4b35-8518-6da400dbb6f7" />
+
+## ADC
+> For the full thing follow the official guide: https://wiki.luckfox.com/Luckfox-Pico-Plus-Mini/ADC
+
+For this we can use the pin 145 (ADC channel 1) and see its value with:
+```bash
+cat /sys/bus/iio/devices/iio\:device0/in_voltage1_raw
+```
+Note it supports only 1.8v.
+
+Here is a video demonstrating PWM (with led and servo on pin 54), GPIO (input pin 55 and output pin 54) and ADC (with an LDR / light sensor on pin 145):  
+
+[![Watch the video](https://img.youtube.com/vi/4hKQG2g6W3k/0.jpg)](https://www.youtube.com/watch?v=4hKQG2g6W3k)
+
