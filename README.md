@@ -859,7 +859,11 @@ For example pin 54 supports 3.3v and can be PWM, UART or GPIO, but you must keep
 
 The idea with GPIO is that you first export the pin you want to use, then configure it, then use, and once you are done, unexport to free the pin.
 
-* Setting pin 54 state
+* Setting pin 54 state  
+```
+Pin 54 ───▒▒▒▒▒▒▒▒(1kΩ)───|>|─── GND
+           Resistor       LED
+```
 ```bash
 echo 54 > /sys/class/gpio/export
 echo out > /sys/class/gpio/gpio54/direction
@@ -869,6 +873,9 @@ echo 54 > /sys/class/gpio/unexport
 ```
 
 * Reading pin 55 state
+```
+Pin 55 ─────────────────── 1V8(OUT)
+```
 ```bash
 echo 55 > /sys/class/gpio/export         
 echo in > /sys/class/gpio/gpio55/direction 
@@ -883,8 +890,15 @@ The same idea from GPIO here, export the pin, configure it, use and unexport. He
 
 <img width="341" height="177" alt="image" src="https://github.com/user-attachments/assets/863a5ad5-1f81-4f2c-96b6-93ddc8802d30" />  
 
-Here is an example on how to control a servo motor, in short they use a 20ms period whereas within that period a pulse between 1ms-2ms control the arm position, 1ms = 0 degrees and 2ms = 90 degrees (for 90 degree servos, some are 180 or even 360), being 1.5ms the center: 
+Here is an example on how to control a servo motor, in short they use a 20ms period whereas within that period a pulse between 1ms-2ms control the arm position, 1ms = 0 degrees and 2ms = 90 degrees (for 90 degree servos, some are 180 or even 360), being 1.5ms the center:  
 ```
+Pin 54 ─── PWM Signal ───┐
+                         │
+VBUS ───── 5V ───────────│─── Servo Motor
+                         │
+GND ────── GND ──────────┘
+```
+```bash
 $ echo 0 > /sys/class/pwm/pwmchip10/export
 $ echo 1 > /sys/class/pwm/pwmchip10/pwm0/enable
 $ echo "normal" > /sys/class/pwm/pwmchip10/pwm0/polarity 
@@ -900,11 +914,24 @@ $ echo 0 > /sys/class/pwm/pwmchip10/unexport
 ## ADC
 > For the full thing follow the official guide: https://wiki.luckfox.com/Luckfox-Pico-Plus-Mini/ADC
 
-For this we can use the pin 145 (ADC channel 1) and see its value with:
+For this example let's do this:
+```
+1V8(OUT) ─── LDR ────┐
+                     │
+                  Pin 145 ───▒▒▒▒▒▒▒▒(1kΩ)─── GND
+                     │
+                  Analog Input
+```
+* Creates a voltage divider circuit
+* Pin 145 reads analog voltage that varies with light intensity
+* Voltage at Pin 145 = 1V8 * (1kΩ / (1kΩ + LDR_resistance))
+* Bright light = low LDR resistance = higher voltage
+* Dark = high LDR resistance = lower voltage
+  
+Read pin 145 (ADC channel 1) value with:
 ```bash
 cat /sys/bus/iio/devices/iio\:device0/in_voltage1_raw
 ```
-Note it supports only 1.8v.
 
 Here is a video demonstrating PWM (with led and servo on pin 54), GPIO (input pin 55 and output pin 54) and ADC (with an LDR / light sensor on pin 145):  
 
