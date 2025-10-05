@@ -826,7 +826,7 @@ To cross-compile stuff to pico let's use `fbDOOM` as an example. If you installe
 $ cd {SDK_PATH}/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/
 $ source env_install_toolchain.sh
 ```
-Which installed the toolchain in your system so that your environment always have the `arm-linux-gnueabihf-` toolchain in the path, like the C compiler `arm-linux-gnueabihf-gcc`. If not make sure to follow the official SDK Github instructions.
+Which installed the toolchain in your system so that your environment always have the `arm-rockchip830-linux-uclibcgnueabihf-` toolchain in the path, like the C compiler `arm-rockchip830-linux-uclibcgnueabihf-gcc`. If not make sure to follow the official SDK Github instructions.
 
 On the host machine/x86, where you installed the SDK, get fbDOOM sources:
 ```
@@ -835,12 +835,14 @@ $ cd fbDOOM/fbdoom
 ```
 Cross-compile statically linked, so that it becomes a full standalone binary (no external dependencies):
 ```
-$ make CROSS_COMPILE=arm-linux-gnueabihf- LDFLAGS="-s -static" NOSDL=1
+$ make CROSS_COMPILE=arm-rockchip830-linux-uclibcgnueabihf- LDFLAGS="-s -static" NOSDL=1
 $ ls -lh fbdoom
 -rwxrwxr-x 1 note note 666K Sep 24 15:39 fbdoom
 $ file fbdoom
 fbdoom: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linked, BuildID[sha1]=df3e06c85e09e42e47937815fa04090df95157f9, for GNU/Linux 3.2.0, stripped
 ```
+> [!WARNING]
+> DON'T use `arm-linux-gnueabihf-` to compile things! it may compile and run, but I faced situations where it behaved wrong, make sure to always use `arm-rockchip830-linux-uclibcgnueabihf-` instead!
 
 # Compilation inside pico
 Sometimes is just tricky or hard to cross-compile complex things, in thoses cases, you can use the pre-made Ubuntu image which already contains the toolchain and compile natively directly from the pico, will be slow but sometimes it's a sacrifice needed.  
