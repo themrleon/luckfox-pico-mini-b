@@ -943,14 +943,20 @@ Here is a video demonstrating PWM (with led and servo on pin 54), GPIO (input pi
 Pico mini b has 3 UARTs: UART2 which is used for debugging purposes and access the bootloader, so only UART3 and UART4 are available, both should work fine with minicom, ex: `minicom -D /dev/ttyS3`, just make sure to enable them with the `luckfox-config` tool.
 
 # Using the NAND Flash
-> For the full thing follow the official guide: https://wiki.luckfox.com/Luckfox-Pico-Plus-Mini/Flash-image#5-image-flashing-linux-environment
+> For the full thing follow the official guide: https://wiki.luckfox.com/Luckfox-Pico-Plus-Mini/Flash-image
 
-The tool needed is available in 3 different sources: at the official guide there is a direct link, in the SDK tools and [this](https://github.com/rockchip-linux/rkdeveloptool) open-source version, pick one, power up pico while holding its **boot** button, and check if is detected as this:
+I have found the tool needed in 4 different places: 
+1. In the official guide there is a direct download link
+2. In the SDK tools
+3. https://github.com/vicharak-in/Linux_Upgrade_Tool
+4. https://github.com/rockchip-linux/rkdeveloptool
+  
+Pick one, power up pico while holding its **boot** button, and check if is detected as follows:
 ```bash
 $ lsusb 
 Bus 002 Device 006: ID 2207:110c Fuzhou Rockchip Electronics Company 
 ```
-Then just proceed with the `update.img` running as admin:
+Then just proceed with the `update.img`:
 ```bash
 $ sudo ./upgrade_tool uf update.img 
 Using /home/note/luckfox/upgrade_tool_v2.17_for_linux/config.ini
