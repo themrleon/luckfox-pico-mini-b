@@ -937,3 +937,43 @@ Here is a video demonstrating PWM (with led and servo on pin 54), GPIO (input pi
 
 [![Watch the video](https://img.youtube.com/vi/4hKQG2g6W3k/0.jpg)](https://www.youtube.com/watch?v=4hKQG2g6W3k)
 
+## UART
+> For the full thing follow the official guide: https://wiki.luckfox.com/Luckfox-Pico-Plus-Mini/UART/
+
+Pico mini b has 3 UARTs: UART2 which is used for debugging purposes and access the bootloader, so only UART3 and UART4 are available, both should work fine with minicom, ex: `minicom -D /dev/ttyS3`, just make sure to enable them with the `luckfox-config` tool.
+
+# Using the NAND Flash
+> For the full thing follow the official guide: https://wiki.luckfox.com/Luckfox-Pico-Plus-Mini/Flash-image#5-image-flashing-linux-environment
+
+The tool needed is available in 3 different sources: at the official guide there is a direct link, in the SDK tools and [this](https://github.com/rockchip-linux/rkdeveloptool) open-source version, pick one, power up pico while holding its **boot** button, and check if is detected as this:
+```bash
+$ lsusb 
+Bus 002 Device 006: ID 2207:110c Fuzhou Rockchip Electronics Company 
+```
+Then just proceed with the `update.img` running as admin:
+```bash
+$ sudo ./upgrade_tool uf update.img 
+Using /home/note/luckfox/upgrade_tool_v2.17_for_linux/config.ini
+Loading firmware...
+Support Type:1106       FW Ver:0.0.00   FW Time:2023-10-28 15:25:33
+Loader ver:1.01 Loader Time:2023-10-28 15:21:04
+Start to upgrade firmware...
+Download Boot Start
+Download Boot Success
+Wait For Maskrom Start
+Wait For Maskrom Success
+Test Device Start
+Test Device Success
+Check Chip Start
+Check Chip Success
+Get FlashInfo Start
+Get FlashInfo Success
+Prepare IDB Start
+Prepare IDB Success
+Download IDB Start
+Download IDB Success
+Download Firmware Start
+Download Image... (100%)
+Download Firmware Success
+Upgrade firmware ok.
+```
