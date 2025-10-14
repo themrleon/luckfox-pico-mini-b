@@ -613,7 +613,7 @@ Frame buffer device information:
 You can see these steps in the DOOM demo [video](#but-can-it-run-doom-). To use as a built-in module, check the example [here](#u-boot-and-kernel-boot-args).
 
 ## Console on the framebuffer
-To have a console mapped to the framebuffer add `console=tty0` to the boot args, run VNC server `x11vnc -rawfb console -auth /dev/null -noxdamage -forever -shared  -repeat -defer 0 -wait 0  -noxinerama -nowf  -nowcr -speeds modem -tightfilexfer` and connect to pico IP with a VNC client:  
+To have a console mapped to the framebuffer add `console=tty0` to the boot args, run VNC server `x11vnc -rawfb console -auth /dev/null -noxdamage -forever -shared  -repeat -defer 0 -wait 0  -noxinerama -nowf  -nowcr -speeds modem -tightfilexfer` and connect to pico IP with a VNC client, here is a video demoing (laggy due to the crappy 2.4ghz wifi dongle/signal):  
 
 [![Watch the video](https://img.youtube.com/vi/atJcfclwB_E/0.jpg)](https://www.youtube.com/watch?v=atJcfclwB_E)
 
