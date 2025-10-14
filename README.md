@@ -956,7 +956,7 @@ I have found the tool needed in 4 different places:
 3. https://github.com/vicharak-in/Linux_Upgrade_Tool
 4. https://github.com/rockchip-linux/rkdeveloptool
   
-Pick one, power up pico while holding its **boot** button, and check if is detected as follows:
+Pick one, connect pico to computer using the USB cable while holding its **boot** button, and check if is detected as follows:
 ```bash
 $ lsusb 
 Bus 002 Device 006: ID 2207:110c Fuzhou Rockchip Electronics Company 
