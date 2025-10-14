@@ -610,7 +610,12 @@ Frame buffer device information:
     LineLength  : 640
     Accelerator : No
 ```
-You can see these steps in the DOOM demo [video](#but-can-it-run-doom-). To use as a built-in module, check the example [here](#u-boot-and-kernel-parameters).
+You can see these steps in the DOOM demo [video](#but-can-it-run-doom-). To use as a built-in module, check the example [here](#u-boot-and-kernel-boot-args).
+
+## Console on the framebuffer
+To have a console mapped to the framebuffer add `console=tty0` to the boot args, run VNC server `x11vnc -rawfb console -auth /dev/null -noxdamage -forever -shared  -repeat -defer 0 -wait 0  -noxinerama -nowf  -nowcr -speeds modem -tightfilexfer` and connect to pico IP with a VNC client:  
+
+[![Watch the video](https://img.youtube.com/vi/atJcfclwB_E/0.jpg)](https://www.youtube.com/watch?v=atJcfclwB_E)
 
 # U-Boot and kernel boot args
 The U-boot bootloader is the one passing the boot arguments to the Linux kernel, they can be changed at runtime or compile-time. At runtime is easier/quicker to test things, but they won't persist after generating new images. To enter the bootloader hold `ctrl + c` and power up pico **only after** until it enters the command line, make sure to be using [UART connection](#uart-connection). Let's do an example adding `video=vfb` to the kernel args:
@@ -983,3 +988,9 @@ Download Image... (100%)
 Download Firmware Success
 Upgrade firmware ok.
 ```
+
+# Projects with pico
+Some personal projects using the pico:
+* https://github.com/themrleon/ultrasonic-tracker
+* https://github.com/themrleon/ultrasonic-2d-position-tracker
+* https://github.com/themrleon/ultrasonic-radar
