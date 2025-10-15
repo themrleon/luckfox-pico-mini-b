@@ -990,7 +990,8 @@ Upgrade firmware ok.
 ```
 
 # Projects with pico
-Some personal projects using the pico:
+Some personal projects:
 * https://github.com/themrleon/ultrasonic-tracker
 * https://github.com/themrleon/ultrasonic-2d-position-tracker
 * https://github.com/themrleon/ultrasonic-radar
+* https://github.com/themrleon/analog-joystick
