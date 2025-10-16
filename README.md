@@ -825,6 +825,87 @@ iface wlan0 inet dhcp
 > To scan nearby networks use `iw wlan0 scan` (where `wlan0` is your interface name)  
 > To test network speed use `iperf3 -s` on a server (in the same network) and `iperf3 -c <server ip>`
 
+# Setup wifi access point
+What if instead of connecting pico to some network, you wanna make it an access point so that devices can connect directly to it? here is the process:
+
+1. Make sure your wifi **device** support AP mode
+2. Make sure your wifi **driver** supports AP mode (check driver feature flags and re-compile if needed)
+3. Get these tools `hostapd` and `dnsmasq` (install them via buildroot menu) 
+4. Check device supported modes (if has `AP` then will work), ex:
+```bash
+$ iw list | grep -A5 "Supported interface modes"
+Supported interface modes:
+                 * IBSS
+                 * managed
+                 * AP
+                 * AP/VLAN
+                 * monitor
+```
+5. Create or edit `/etc/hostapd.conf` to have:
+```bash
+interface=wlan0
+driver=nl80211
+
+ssid=LuckFoxAP
+hw_mode=g
+channel=6
+macaddr_acl=0
+auth_algs=1
+ignore_broadcast_ssid=0
+
+wpa=2
+wpa_passphrase=MySecurePass123
+wpa_key_mgmt=WPA-PSK
+rsn_pairwise=CCMP
+```
+6. Set an ip for the access point with `ip addr add 192.168.4.1/24 dev wlan0`
+7. Put the interface up and ready with `ip link set wlan0 up`
+6. Run with `hostapd -B /etc/hostapd.conf`, if worked then you'll see something like this:
+```bash
+[  292.059771] usb 1-1.1: request firmware rtlwifi/rtl8188fufw.bin
+[  292.060039] usb 1-1.1: request firmware rtlwifi/rtl8188fufw.bin loaded
+[  292.698336] RTL871X: nolinked power save leave
+[  292.799309] RTL871X: assoc success
+[  292.807003] RTL871X: set group key camid:1, addr:00:00:00:00:00:00, kid:1, type:AES
+wlan0: interface state UNINITIALIZED->ENABLED
+wlan0: AP-ENABLED 
+```
+8. Now from another device scan wifi networks and you should see the "LuckFoxAP" AP! this created an AP with static IP `192.168.4.1` using `wlan0`, adapt the commands to your needs.
+
+## DHCP server
+The AP works but clients won't have an automatic IP assigned to them, they'll need to set themselves a static IP, in order to avoid that, we have to setup a DHCP server so that the AP assign IPs to them automatically:
+1. Create `/etc/dnsmasq.conf` with this:
+```bash
+interface=wlan0
+dhcp-range=192.168.4.10,192.168.4.100,255.255.255.0,24h
+dhcp-option=3,192.168.4.1
+dhcp-option=6,8.8.8.8
+```
+2. Run `dnsmasq -C /etc/dnsmasq.conf`
+
+That is it, now clients will be assigned an ip automatically after connecting to the AP
+
+## Checking connected clients
+To see connected devices in real time:
+```bash
+$ iw dev wlan0 station dump
+Station aa:bb:59:26:e2:55 (on wlan0)
+        signal:         -40 dBm
+        current time:   4337248 ms
+```
+
+Here are three other useful commands, however they will still show information about devices/clients that may have already been disconnected:
+```bash
+$ ip neigh show dev wlan0
+192.168.4.38 lladdr aa:bb:59:26:e2:55 used 151/146/127 probes 1 STALE
+
+$ arp -n
+? (192.168.4.38) at aa:bb:59:26:e2:55 [ether]  on wlan0
+
+$ cat /var/lib/misc/dnsmasq.leases
+90733 aa:bb:19:29:e3:4f 192.168.4.38 RedmiNote8Pro-RedmiN cc:22:45:19:29:43:4a
+```
+
 # Cross-compilation
 To cross-compile stuff to pico let's use `fbDOOM` as an example. If you installed the SDK at some point you did this:
 ```
