@@ -852,6 +852,50 @@ fbdoom: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linke
 # Compilation inside pico
 Sometimes is just tricky or hard to cross-compile complex things, in thoses cases, you can use the pre-made Ubuntu image which already contains the toolchain and compile natively directly from the pico, will be slow but sometimes it's a sacrifice needed.  
 
+# Compiling external drivers (RTL8188FU example)
+<img width="240" height="291" alt="image" src="https://github.com/user-attachments/assets/c23f6132-335d-4911-8022-b9cd973ec595" />
+
+For drivers that are not included in the kernel shipped by the SDK, you'll have to rely on external drivers, the process start by preparing the kernel sources for the external driver compilation, then compiling the driver while dealing with eventual compilation problems. Here is an example using a Realtek 8188FU USB Wifi dongle, note the shipped kernel contains drivers for couple versions of the RTL8188, but not the FU variant (it's almost like if the kernel is saying 'FU' to me), the steps:
+
+1. Go to `<sdk folder>/sysdrv`
+2. Copy the kernel config / defconfig file where all your kernel changes may be, the SDK seems to keep a copy in this file `luckfox_rv1106_linux_defconfig`
+3. Copy the defconfig file to `<sdk folder>/sysdrv/source/kernel`
+4. Prepare the kernel for the external driver compilation:
+```bash
+make -C <sdk absolute path>/sysdrv/source/kernel ARCH=arm CROSS_COMPILE=arm-rockchip830-linux-uclibcgnueabihf- mrproper
+make -C <sdk absolute path>/sysdrv/source/kernel ARCH=arm CROSS_COMPILE=arm-rockchip830-linux-uclibcgnueabihf- luckfox_rv1106_linux_defconfig
+make -C <sdk absolute path>/sysdrv/source/kernel ARCH=arm CROSS_COMPILE=arm-rockchip830-linux-uclibcgnueabihf- modules_prepare
+```
+5. Download the driver: https://github.com/kelebek333/rtl8188fu 
+6. Go to driver source and run: `make ARCH="arm" CROSS_COMPILE=arm-rockchip830-linux-uclibcgnueabihf- KSRC=<sdk absolute path>/sysdrv/source/kernel modules`
+7. If all goes well you should get the `.ko` file which is the driver itself
+   
+> [!IMPORTANT]
+> Always make sure the driver you are going to the adventure of compiling, supports your kernel version
+
+> [!WARNING]
+> Expect to run into compilation troubles, it's a normal part of the journey. You might face anything from confusing warnings to breaking errors caused by architecture issues or missing code. It's a chaotic and time-consuming stage, but don't give up! Through persistence, you'll learn a tremendous amount and will eventually succeed
+
+Copy the driver to pico and `insmod` it, after that `dmesg` will complain about not finding a `rtl8188fufw.bin` file, which is a classic Realtek driver thing, so just search and get the file from somewhere like here:  
+https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/tree/rtlwifi/rtl8188fufw.bin  
+
+And copy to `/lib/firmware/rtlwifi/`, make sure it can be read by changing the file permissions to `chmod 644` otherwise `dmesg` will show another related error to that, now it should finally work: 
+```bash
+ ====16.401332] =======================================================
+[   16.401340] ==== Launching Wi-Fi driver! (Powered by Rockchip) ====
+[   16.401346] =======================================================
+[   16.401353] Realtek 8188FU USB WiFi driver (Powered by Rockchip) init.
+[   16.401358] RTL871X: module init start
+[   16.401367] RTL871X: rtl8188fu v4.3.23.6_20964.20170110
+[   16.447827] RTL871X: hal_com_config_channel_plan chplan:0x20
+[   16.450030] usb 1-1.1: request firmware rtlwifi/rtl8188fufw.bin
+[   16.453749] usb 1-1.1: request firmware rtlwifi/rtl8188fufw.bin loaded
+```
+And that is it, run `ifconfig -a` and you should see a new `wlan` entry there.
+
+> [!TIP]
+> Take a look at the `Makefile` in the driver source, it may contain feature flags you can enable/disable so that you can customize the driver with things supported or not, cutting off not needed features helps to reduce the driver size, memory and CPU usage
+
 # Hardware interfacing
 When connecting anything to pico, refer to the pinout board image, and keep an eye on the pin number (on the edge in blue) since that is what the code uses, also keep an eye on the voltage of each pin, some pins support 3.3v while others only 1.8v, anything above their range **will permanent damage or even kill the SoC**. Also keep in mind the board expose 3 voltages: 5v (from USB host cable), 3.3v (voltage regulator using the USB 5v) and 1.8v, use them when needed.  
 
