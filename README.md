@@ -1076,25 +1076,7 @@ Make sure to enable SPI in the `luckfox-config` tool then just try something lik
 
 [![Watch the video](https://img.youtube.com/vi/GNox8-77f00/0.jpg)](https://www.youtube.com/watch?v=GNox8-77f00)
 
-The wiring:
-<img width="1617" height="341" alt="image" src="https://github.com/user-attachments/assets/642bc8cf-b89b-4f59-9eb2-a485d5a9de74" />
-
-| Display Pin | Pico Pin |
-|-------------|-------------------------|
-| VCC         | 3.3V            |
-| GND         | GND             |
-| SCL (SCK)   | 49 / SPI0_CLK |
-| SDA (MOSI)  | 50 / SPI0_MOSI |
-| RES (Reset) | 56        |
-| DC (Data/CMD) | 57      |
-| CS (Chip Select) | 48 / SPI0_CS0 |
-| BL (Backlight) | 3.3V         |
-
-> [!WARNING]
-> Make sure to disable other functions like UART3 for DC and RES pins
-
-> [!NOTE]
-> More details on the display used [here](https://github.com/themrleon/rpi-st7789-console-display/tree/main?tab=readme-ov-file#what-exactly-is-the-st7789-model-used-in-this-lib-code-)
+For the wiring and a **much faster C version**, check [this out](https://github.com/themrleon/luckfox-pico-st7789-display) 
 
 # Using the NAND Flash
 > For the full thing follow the official guide: https://wiki.luckfox.com/Luckfox-Pico-Plus-Mini/Flash-image
@@ -1284,3 +1266,4 @@ Some personal projects:
 * https://github.com/themrleon/ultrasonic-2d-position-tracker
 * https://github.com/themrleon/ultrasonic-radar
 * https://github.com/themrleon/analog-joystick
+* https://github.com/themrleon/luckfox-pico-st7789-display
